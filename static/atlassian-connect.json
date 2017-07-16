@@ -1,0 +1,33 @@
+{{define "config"}}{
+    "key": "ga-hipchat-awesomeness",
+    "name": "Golang Bot",
+    "description": "HipChat Golang Base App",
+    "vendor": {
+        "name": "Atlassian Labs",
+        "url": "https://www.hipchat.com"
+    },
+    "links": {
+        "self": "{{.LocalBaseUrl}}/atlassian-connect.json",
+        "homepage": "{{.LocalBaseUrl}}/atlassian-connect.json"
+    },
+    "capabilities": {
+        "hipchatApiConsumer": {
+            "scopes": [
+                "send_notification"
+            ]
+        },
+        "installable": {
+            "callbackUrl": "{{.LocalBaseUrl}}/installable"
+        },
+        "configurable": {
+             "url": "{{.LocalBaseUrl}}/config"
+        },
+        "webhook": {
+            "url": "{{.LocalBaseUrl}}/hook",
+            "pattern": "^/test_hook",
+            "event": "room_message",
+            "name": "Golang Bot"
+        }
+    }
+}
+{{end}}
