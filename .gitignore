@@ -1,0 +1,9 @@
+debug
+config.yaml
+.vscode
+hipchatBot
+hipchatBot.exe
+
+
+# external packages folder
+vendor/*/

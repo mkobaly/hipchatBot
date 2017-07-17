@@ -5,6 +5,8 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/mkobaly/hipchatBot/teamcity"
 )
 
 func TestHook(t *testing.T) {
@@ -27,7 +29,7 @@ func TestHook(t *testing.T) {
             },
             "id": "a9106252-693b-4c12-9bde-755eaaa07052",
             "mentions": [],
-            "message": "/deploy foobar branchA",
+            "message": "/build --list",
             "type": "message"
         },
         "room": {
@@ -56,7 +58,8 @@ func TestHook(t *testing.T) {
 	}
 
 	c := &Context{
-		rooms: make(map[string]*RoomConfig),
+		rooms:   make(map[string]*RoomConfig),
+		builder: teamcity.New(creds),
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.

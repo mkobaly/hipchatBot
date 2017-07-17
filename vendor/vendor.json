@@ -21,10 +21,22 @@
 			"revisionTime": "2017-07-03T15:07:09Z"
 		},
 		{
+			"checksumSHA1": "sNvyJ08HpjR6eOnkMKypQezUlE0=",
+			"path": "github.com/mkobaly/teamcity",
+			"revision": "17e5522036bb6551dc1c5b6b924370cfb83d9c54",
+			"revisionTime": "2016-11-09T15:07:15Z"
+		},
+		{
 			"checksumSHA1": "dIustNp4c/TkgJm2yW8PKBV2rpY=",
 			"path": "github.com/tbruyelle/hipchat-go/hipchat",
 			"revision": "e6e04ecf605dfa292689484178069a39953296a7",
 			"revisionTime": "2017-07-01T19:07:03Z"
+		},
+		{
+			"checksumSHA1": "KHOUE9QA14iPCFNIVs5X72MYdkA=",
+			"path": "gopkg.in/yaml.v2",
+			"revision": "3b4ad1db5b2a649883ff3782f5f9f6fb52be71af",
+			"revisionTime": "2017-07-13T20:15:20Z"
 		}
 	],
 	"rootPath": "github.com/mkobaly/hipchatBot"
