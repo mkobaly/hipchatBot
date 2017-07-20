@@ -18,7 +18,7 @@ This will generate a new public facing HTTPS URL that we will use later to confi
 - Log into hipchat and select the room you want to configure the integration for
 - Create new integration and configure it according to the screenshot below
 
-![](hipchatintegration.png)
+![](hipchatIntegration.png)
 
 ### Step 3
 
