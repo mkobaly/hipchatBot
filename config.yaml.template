@@ -1,0 +1,7 @@
+hipchaturl: "https://symmetryconnect.hipchat.com/v2/room/xxxx/notification?auth_token=xxxx"
+port: 8030
+ngrokurl: "http://xxxxx.ngrok.io"
+teamcity:
+  url: "http://xxxxx"
+  username : "username"
+  password : "password"
