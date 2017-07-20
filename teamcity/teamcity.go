@@ -34,6 +34,12 @@ type Builder struct {
 	BuildResult *teamcity.Build
 }
 
+type ById []*teamcity.BuildType
+
+func (a ById) Len() int           { return len(a) }
+func (a ById) Swap(i, j int)      { a[i], a[j] = a[j], a[i] }
+func (a ById) Less(i, j int) bool { return a[i].ID < a[j].ID }
+
 //New will create a new teamcity Builder
 func New(creds config.UserCredential) *Builder {
 	var b = new(Builder)
@@ -49,12 +55,13 @@ func (b *Builder) SetBuildInfo(bi BuildInfo) error {
 }
 
 //Build will kick off a TeamCity build
-func (b *Builder) Build() error {
+func (b *Builder) Build(params map[string]string) error {
 	if (BuildInfo{}) == b.BuildInfo {
 		return errors.New("Build Info not set yet so unable to build")
 	}
+
 	//client := teamcity.New(b.Credentials.URL, b.Credentials.Username, b.Credentials.Password)
-	x, err := b.client.QueueBuild(b.BuildInfo.BuildConfigID, b.BuildInfo.Branch, nil)
+	x, err := b.client.QueueBuild(b.BuildInfo.BuildConfigID, b.BuildInfo.Branch, params)
 	if err != nil {
 		return err
 	}
@@ -89,6 +96,44 @@ func (b *Builder) VerifyBuildStatus() error {
 		panic(err.Error())
 	}
 	if err := json.NewDecoder(resp.Body).Decode(b.BuildResult); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (b *Builder) GetBuildStatus1(taskId string) (teamcity.Build, error) {
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", b.Credentials.URL+"httpAuth/app/rest/buildQueue/taskId:"+taskId, nil)
+	req.SetBasicAuth(b.Credentials.Username, b.Credentials.Password)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	defer resp.Body.Close()
+
+	if err != nil {
+		panic(err.Error())
+	}
+	var br teamcity.Build
+	err = json.NewDecoder(resp.Body).Decode(&br)
+	return br, err
+
+}
+
+func (b *Builder) GetBuildStatus(br *teamcity.Build) error {
+	client := &http.Client{}
+	req, _ := http.NewRequest("GET", b.Credentials.URL+br.HREF, nil)
+	req.SetBasicAuth(b.Credentials.Username, b.Credentials.Password)
+	req.Header.Set("Accept", "application/json")
+	req.Header.Set("Content-Type", "application/json")
+
+	resp, err := client.Do(req)
+	defer resp.Body.Close()
+
+	if err != nil {
+		panic(err.Error())
+	}
+	if err := json.NewDecoder(resp.Body).Decode(br); err != nil {
 		return err
 	}
 	return nil

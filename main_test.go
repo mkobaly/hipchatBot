@@ -6,6 +6,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mkobaly/hipchatBot/config"
 	"github.com/mkobaly/hipchatBot/teamcity"
 )
 
@@ -29,7 +30,7 @@ func TestHook(t *testing.T) {
             },
             "id": "a9106252-693b-4c12-9bde-755eaaa07052",
             "mentions": [],
-            "message": "/build --list",
+            "message": "/build status 21766",
             "type": "message"
         },
         "room": {
@@ -57,9 +58,12 @@ func TestHook(t *testing.T) {
 		t.Fatal(err)
 	}
 
+	config := config.NewConfig("config.yaml")
+
 	c := &Context{
 		rooms:   make(map[string]*RoomConfig),
-		builder: teamcity.New(creds),
+		builder: teamcity.New(config.Teamcity),
+		cfg:     config,
 	}
 
 	// We create a ResponseRecorder (which satisfies http.ResponseWriter) to record the response.
