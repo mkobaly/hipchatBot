@@ -126,7 +126,7 @@ func (c *Context) hook(w http.ResponseWriter, r *http.Request) {
 
 	cmd := strings.Split(p.Item.Message.Message, " ")
 	if len(cmd) < 2 {
-		postToHipchat(c.cfg.HipchatURL, getHelpMessageHtml(), "yellow", "html")
+		postToHipchat(c.cfg.HipchatURL, parseHTMLTemplate("help", nil), "yellow", "html")
 		return
 	}
 	action := cmd[1]
@@ -142,7 +142,7 @@ func (c *Context) hook(w http.ResponseWriter, r *http.Request) {
 					bIds = append(bIds, r.ID)
 				}
 			}
-			message := getBuildListMessage(bIds)
+			message := parseHTMLTemplate("list", bIds)
 			postToHipchat(c.cfg.HipchatURL, message, "green", "html")
 		} else {
 			postToHipchat(c.cfg.HipchatURL, "<b>Error getting build list</b>", "red", "html")
@@ -150,7 +150,7 @@ func (c *Context) hook(w http.ResponseWriter, r *http.Request) {
 		return
 	case "kick":
 		if len(cmd) != 4 {
-			postToHipchat(c.cfg.HipchatURL, getHelpMessageHtml(), "yellow", "html")
+			postToHipchat(c.cfg.HipchatURL, parseHTMLTemplate("help", nil), "yellow", "html")
 			return
 		}
 		buildConfig, branch := cmd[2], cmd[3]
@@ -173,13 +173,13 @@ func (c *Context) hook(w http.ResponseWriter, r *http.Request) {
 				Branch:        branch,
 				TaskID:        strings.Split(c.builder.BuildResult.HREF, ":")[1],
 			}
-			message := getKickMessage(data)
+			message := parseHTMLTemplate("kick", data)
 			postToHipchat(c.cfg.HipchatURL, message, "green", "html")
 		}
 		return
 	case "status":
 		if len(cmd) != 3 {
-			postToHipchat(c.cfg.HipchatURL, getHelpMessageHtml(), "yellow", "html")
+			postToHipchat(c.cfg.HipchatURL, parseHTMLTemplate("help", nil), "yellow", "html")
 			return
 		}
 		taskId := cmd[2]
@@ -187,77 +187,23 @@ func (c *Context) hook(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			fmt.Println(err.Error())
 		}
-		color := "green"
-		if b.Status != "SUCCESS" {
+		color := "yellow"
+		if b.State == "finished" && b.Status == "SUCCESS" {
+			color = "green"
+		}
+		if b.State == "finished" && b.Status == "FAILURE" {
 			color = "red"
 		}
-		message := getStatusMessage(b)
+		message := parseHTMLTemplate("status", b)
 		postToHipchat(c.cfg.HipchatURL, message, color, "html")
 
 		return
 	case "--help":
-		postToHipchat(c.cfg.HipchatURL, getHelpMessageHtml(), "green", "html")
+		postToHipchat(c.cfg.HipchatURL, parseHTMLTemplate("help", nil), "green", "html")
 		return
 	default:
-		postToHipchat(c.cfg.HipchatURL, getHelpMessageHtml(), "yellow", "html")
+		postToHipchat(c.cfg.HipchatURL, parseHTMLTemplate("help", nil), "yellow", "html")
 	}
-
-	// switch len(cmd) {
-	// case 2:
-	// 	action, param := cmd[0], cmd[1]
-	// 	fmt.Println(action, param)
-	// 	switch param {
-	// 	case "--list":
-	// 		builds, err := c.builder.GetBuilds()
-	// 		sort.Sort(teamcity.ById(builds))
-	// 		if err == nil {
-	// 			var bIds []string
-	// 			for _, r := range builds {
-	// 				if strings.HasSuffix(r.ID, "_RC") || strings.HasSuffix(r.ID, "_CI") {
-	// 					bIds = append(bIds, r.ID)
-	// 				}
-	// 			}
-	// 			message := getBuildListMessage(bIds)
-	// 			postToHipchat(c.cfg.HipchatURL, message, "green", "html")
-	// 			return
-
-	// 		} else {
-	// 			postToHipchat(c.cfg.HipchatURL, "<b>Error getting build list</b>", "red", "html")
-	// 			return
-	// 		}
-	// 	case "--help":
-	// 		postToHipchat(c.cfg.HipchatURL, getHelpMessageHtml(), "green", "html")
-	// 		return
-	// 	default:
-	// 		postToHipchat(c.cfg.HipchatURL, getHelpMessageHtml(), "yellow", "html")
-	// 	}
-
-	// case 3:
-	// 	var buffer bytes.Buffer
-	// 	color := "green"
-	// 	buildConfig, branch := cmd[1], cmd[2]
-	// 	bi := teamcity.BuildInfo{BuildConfigID: buildConfig, Branch: branch}
-	// 	c.builder.SetBuildInfo(bi)
-
-	// 	params := make(map[string]string)
-	// 	params["Branch"] = branch
-
-	// 	if err := c.builder.Build(params); err != nil {
-	// 		color = "red"
-	// 		buffer.WriteString("Failed to kick off build for " + buildConfig + " using branch " + branch + "\n")
-	// 	} else {
-
-	// 		buffer.WriteString("Kicked off build for " + buildConfig + " using branch " + branch + "\nTaskId: " + c.builder.BuildResult.HREF + " (used to lookup status of build)\n")
-	// 		//go watchForFinishedBuild(c.builder, c.cfg.HipchatURL)
-	// 	}
-	// 	postToHipchat(c.cfg.HipchatURL, buffer.String(), color, "text")
-	// 	return
-
-	// default:
-	// 	message := "Unknown build command. See help below for usage<br><br>" + getHelpMessageHtml()
-	// 	postToHipchat(c.cfg.HipchatURL, message, "yellow", "html")
-
-	// }
 }
 
 // routes all URL routes for app add-on
@@ -301,60 +247,17 @@ func watchForFinishedBuild(b *teamcity.Builder, hipchatURL string) error {
 	}
 }
 
-func getStatusMessage(result interface{}) string {
+func parseHTMLTemplate(templateName string, data interface{}) string {
 	var buffer bytes.Buffer
-	t := template.New("status.html")
+	t := template.New(templateName + ".html")
 	var err error
-	t, err = t.ParseFiles("templates/status.html")
+	tb, err := Asset("templates/" + templateName + ".html")
+	s := string(tb)
+	t, err = t.Parse(s)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
-	err = t.Execute(&buffer, result)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	return buffer.String()
-}
-
-func getKickMessage(build interface{}) string {
-	var buffer bytes.Buffer
-	t := template.New("kick.html")
-	var err error
-	t, err = t.ParseFiles("templates/kick.html")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	err = t.Execute(&buffer, build)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	return buffer.String()
-}
-
-func getBuildListMessage(builds []string) string {
-	var buffer bytes.Buffer
-	t := template.New("list.html")
-	var err error
-	t, err = t.ParseFiles("templates/list.html")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	err = t.Execute(&buffer, builds)
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	return buffer.String()
-}
-
-func getHelpMessageHtml() string {
-	var buffer bytes.Buffer
-	t := template.New("help.html")
-	var err error
-	t, err = t.ParseFiles("templates/help.html")
-	if err != nil {
-		fmt.Println(err.Error())
-	}
-	err = t.Execute(&buffer, nil)
+	err = t.Execute(&buffer, data)
 	if err != nil {
 		fmt.Println(err.Error())
 	}
@@ -378,9 +281,7 @@ func postToHipchat(hipchatURL string, message string, color string, format strin
 // BASE_URL=https://6011fb9f.ngrok.io ./hipchatBot
 func main() {
 	var (
-		//port   = flag.String("port", "8080", "web server port")
 		static = flag.String("static", "./static/", "static folder")
-		//baseURL = flag.String("baseurl", os.Getenv("BASE_URL"), "local base url")
 	)
 	flag.Parse()
 

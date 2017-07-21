@@ -30,7 +30,7 @@ func TestHook(t *testing.T) {
             },
             "id": "a9106252-693b-4c12-9bde-755eaaa07052",
             "mentions": [],
-            "message": "/build status 21766",
+            "message": "/build --help",
             "type": "message"
         },
         "room": {
