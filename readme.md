@@ -22,11 +22,11 @@ This will generate a new public facing HTTPS URL that we will use later to confi
 
 ### Step 3
 
-In order for the hipchatbot to run it needs a configuration file. Copy config.yaml.template and rename it to config.yaml. It must be placed in same folder as hipchatbot application
+In order for the hipchatbot to run it needs a configuration file. Copy config.yaml.template and rename it to config.yaml. It must be placed in same folder as hipchatbot application and edit the following values
 
-- You will need the hipchart POST api url gotten from the hipchat integration page
-- You will need the ngrok URL that is displayed in Step 1 when you ran ngrok
-- You will need your Teamcity URL and credentials
+- Hipchat POST api url gotten from the hipchat integration page
+- Ngrok URL that is displayed in Step 1 when you ran ngrok
+- Your Teamcity URL and credentials
 
 start up the hipchat bot
 
